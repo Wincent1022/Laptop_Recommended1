@@ -13,6 +13,7 @@ cleaned_data = models["cleaned_data"]
 unscaled_data = models["unscaled_data"]
 scaler = models["scaler"]
 best_model = models["best_model"]
+pca = models.get("pca", None)  # Get PCA if available
 
 # Get unique original values for dropdowns
 available_cores = sorted(unscaled_data["num_cores"].unique())
@@ -39,16 +40,29 @@ for col in expected_columns:
     if col not in input_unscaled_df:
         input_unscaled_df[col] = 0  
 
+# Apply Standard Scaling
 input_scaled = scaler.transform(input_unscaled_df[expected_columns])
+
+# Apply PCA transformation if PCA was used in training
+if pca is not None:
+    input_scaled = pca.transform(input_scaled)
+
+# Debugging: Check input dimensions before prediction
+st.write(f"Input shape after transformation: {input_scaled.shape}")
+st.write(f"Expected input shape for model: {best_model.n_features_in_}")
 
 # Recommendation Button
 if st.sidebar.button("Recommend Laptops"):
     st.title("Recommended Laptops")
 
-    # Use best_model directly
-    recommendations = best_model.kneighbors(input_scaled, n_neighbors=5)  # Assuming KNN is best
-    indices = recommendations[1][0]  # Extract indices of recommended laptops
-    recommended_laptops = cleaned_data.iloc[indices]
+    try:
+        # Get recommendations
+        distances, indices = best_model.kneighbors(input_scaled, n_neighbors=5)
+        recommended_laptops = cleaned_data.iloc[indices[0]]
 
-    # Display results
-    st.table(recommended_laptops[['brand', 'processor_tier', 'Price', 'ram_memory', 'display_size', 'gpu_brand']])
+        # Display results
+        st.subheader("Top 5 Recommended Laptops")
+        st.table(recommended_laptops[['brand', 'processor_tier', 'Price', 'ram_memory', 'display_size', 'gpu_brand']])
+
+    except ValueError as e:
+        st.error(f"Model input mismatch: {str(e)}")
