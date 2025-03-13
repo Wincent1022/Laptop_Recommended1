@@ -1,46 +1,50 @@
+import streamlit as st
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.neighbors import NearestNeighbors
-from sklearn.metrics.pairwise import cosine_similarity
 
+# Load models and data
+@st.cache_data
 def load_models():
-    """Load trained models and data from joblib file."""
     return joblib.load("laptop_recommender.joblib")
 
-def recommend_knn(models, input_features, n_recommendations=5):
-    """Recommend laptops using KNN based on PCA-reduced features."""
+models = load_models()
+cleaned_data = models["cleaned_data"]
+numerical_features = cleaned_data.select_dtypes(include=['number']).columns.tolist()
+
+# Streamlit UI
+st.sidebar.title("Laptop Recommendation System")
+st.sidebar.subheader("Select Preferences")
+
+# Sidebar user inputs
+user_inputs = {}
+for feature in numerical_features:
+    user_inputs[feature] = st.sidebar.slider(
+        f"Select {feature}", float(cleaned_data[feature].min()), float(cleaned_data[feature].max()), float(cleaned_data[feature].mean())
+    )
+
+# Convert input to array
+input_array = np.array([user_inputs[feature] for feature in numerical_features]).reshape(1, -1)
+
+# Recommendation Button
+if st.sidebar.button("Recommend Laptops"):
+    # KNN Recommendation
     knn_pca = models["knn_pca"]
     pca = models["pca"]
-    input_transformed = pca.transform([input_features])
-    distances, indices = knn_pca.kneighbors(input_transformed, n_neighbors=n_recommendations)
-    return models["cleaned_data"].iloc[indices[0]]
+    input_transformed = pca.transform(input_array)
+    distances, indices = knn_pca.kneighbors(input_transformed, n_neighbors=5)
+    knn_recommendations = cleaned_data.iloc[indices[0]]
 
-def recommend_cosine(models, input_features, n_recommendations=5):
-    """Recommend laptops using Cosine Similarity."""
+    # Cosine Similarity Recommendation
     cosine_sim = models["cosine_sim"]
-    similarities = cosine_similarity([input_features], models["cleaned_data"].select_dtypes(include=["number"]))[0]
-    top_indices = np.argsort(similarities)[-n_recommendations:][::-1]
-    return models["cleaned_data"].iloc[top_indices]
+    similarities = cosine_sim.dot(input_array.T).flatten()
+    top_indices = np.argsort(similarities)[-5:][::-1]
+    cosine_recommendations = cleaned_data.iloc[top_indices]
 
-def main():
-    """Main function for deployment."""
-    print("Loading models...")
-    models = load_models()
-    print("Models loaded successfully.")
-
-    print("Silhouette Score (K-Means):", models["silhouette_score"])
+    # Display Recommendations
+    st.title("Recommended Laptops")
+    st.subheader("Top 5 Laptops Based on KNN")
+    st.table(knn_recommendations[['brand', 'processor_tier', 'Price', 'ram_memory', 'display_size', 'gpu_brand']])
     
-    # Example Input (User selects values manually for testing)
-    example_input = np.random.rand(models["cleaned_data"].select_dtypes(include=['number']).shape[1])
-    
-    print("\nTop 5 Recommendations using KNN:")
-    knn_recommendations = recommend_knn(models, example_input)
-    print(knn_recommendations)
-    
-    print("\nTop 5 Recommendations using Cosine Similarity:")
-    cosine_recommendations = recommend_cosine(models, example_input)
-    print(cosine_recommendations)
-
-if __name__ == "__main__":
-    main()
+    st.subheader("Top 5 Laptops Based on Cosine Similarity")
+    st.table(cosine_recommendations[['brand', 'processor_tier', 'Price', 'ram_memory', 'display_size', 'gpu_brand']])
