@@ -13,7 +13,7 @@ cleaned_data = models["cleaned_data"]
 unscaled_data = models["unscaled_data"]
 scaler = models["scaler"]
 best_model = models["best_model"]
-pca = models.get("pca", None)  # Get PCA model if it was used in training
+pca = models.get("pca", None)  # Load PCA if available
 
 # Get unique original values for dropdowns
 available_cores = sorted(unscaled_data["num_cores"].unique())
@@ -43,11 +43,11 @@ for col in expected_columns:
 # Apply Standard Scaling
 input_scaled = scaler.transform(input_unscaled_df[expected_columns])
 
-# Apply PCA transformation to reduce to 5 features (to match NearestNeighbors training)
+# **Apply PCA transformation (Must be same as in .ipynb)**
 if pca is not None:
-    input_scaled = pca.transform(input_scaled)  # Now input_scaled has 5 features
+    input_scaled = pca.transform(input_scaled)  # Reduce to 5 features
 
-# Debugging: Check input dimensions before prediction
+# Debugging: Print input shape
 st.write(f"Input shape after transformation: {input_scaled.shape}")
 st.write(f"Expected input shape for model: {best_model.n_features_in_}")
 
@@ -56,11 +56,15 @@ if st.sidebar.button("Recommend Laptops"):
     st.title("Recommended Laptops")
 
     try:
-        # Get recommendations using the best model (assumed NearestNeighbors)
+        # **Check that input_scaled has 5 features before prediction**
+        if input_scaled.shape[1] != best_model.n_features_in_:
+            raise ValueError(f"Feature mismatch: Model expects {best_model.n_features_in_} features, but received {input_scaled.shape[1]}.")
+
+        # **Get recommendations using best_model**
         distances, indices = best_model.kneighbors(input_scaled, n_neighbors=5)
         recommended_laptops = cleaned_data.iloc[indices[0]]
 
-        # Display results
+        # **Display results**
         st.subheader("Top 5 Recommended Laptops")
         st.table(recommended_laptops[['brand', 'processor_tier', 'Price', 'ram_memory', 'display_size', 'gpu_brand']])
 
