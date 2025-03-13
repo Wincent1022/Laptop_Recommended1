@@ -18,10 +18,10 @@ scaler = models["scaler"]
 
 # Select only numerical columns used in scaling
 numerical_columns = ['num_cores', 'ram_memory', 'Price']
+scaled_data = cleaned_data[numerical_columns].to_numpy()
 
 # Ensure scaler was fitted properly before applying inverse transformation
-if hasattr(scaler, "scale_"):
-    scaled_data = cleaned_data[numerical_columns]
+if hasattr(scaler, "scale_") and scaled_data.shape[1] == len(scaler.scale_):
     original_data = pd.DataFrame(scaler.inverse_transform(scaled_data),
                                  columns=numerical_columns)
 else:
@@ -43,7 +43,7 @@ selected_price = st.sidebar.selectbox("Select Price", available_prices)
 
 # Convert input to scaled values for model input
 input_unscaled = np.array([[selected_cores, selected_ram, selected_price]])
-if hasattr(scaler, "scale_"):
+if hasattr(scaler, "scale_") and input_unscaled.shape[1] == len(scaler.scale_):
     input_scaled = scaler.transform(input_unscaled)
 else:
     input_scaled = input_unscaled  # Use unscaled input if scaler is unavailable
