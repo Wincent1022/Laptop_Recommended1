@@ -16,10 +16,15 @@ models = load_models()
 cleaned_data = models["cleaned_data"]
 scaler = models["scaler"]
 
-# Get original (unscaled) values for dropdown selections
-original_data = pd.DataFrame(scaler.inverse_transform(cleaned_data.select_dtypes(include=['number'])),
-                             columns=cleaned_data.select_dtypes(include=['number']).columns)
+# Select only numerical columns used in scaling
+numerical_columns = ['num_cores', 'ram_memory', 'Price']
+scaled_data = cleaned_data[numerical_columns]
 
+# Apply inverse transform only on numerical columns
+original_data = pd.DataFrame(scaler.inverse_transform(scaled_data),
+                             columns=numerical_columns)
+
+# Get unique original values for dropdowns
 available_cores = sorted(original_data["num_cores"].unique())
 available_ram = sorted(original_data["ram_memory"].unique())
 available_prices = sorted(original_data["Price"].unique())
