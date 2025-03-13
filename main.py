@@ -13,7 +13,7 @@ cleaned_data = models["cleaned_data"]
 unscaled_data = models["unscaled_data"]
 scaler = models["scaler"]
 best_model = models["best_model"]
-pca = models.get("pca", None)  # Load PCA if available
+pca = models.get("pca", None)  # Get PCA model if available
 
 # Get unique original values for dropdowns
 available_cores = sorted(unscaled_data["num_cores"].unique())
@@ -35,7 +35,7 @@ expected_columns = ['Price', 'Rating', 'num_cores', 'num_threads', 'ram_memory',
 
 input_unscaled_df = pd.DataFrame(input_unscaled, columns=['num_cores', 'ram_memory', 'Price'])
 
-# Fill missing columns with 0 (or default values) to match model expectations
+# Fill missing columns with 0 to match training data
 for col in expected_columns:
     if col not in input_unscaled_df:
         input_unscaled_df[col] = 0  
@@ -43,11 +43,11 @@ for col in expected_columns:
 # Apply Standard Scaling
 input_scaled = scaler.transform(input_unscaled_df[expected_columns])
 
-# **Apply PCA transformation (Must be same as in .ipynb)**
+# **Ensure PCA transformation is applied correctly**
 if pca is not None:
     input_scaled = pca.transform(input_scaled)  # Reduce to 5 features
 
-# Debugging: Print input shape
+# Debugging: Check input dimensions before making predictions
 st.write(f"Input shape after transformation: {input_scaled.shape}")
 st.write(f"Expected input shape for model: {best_model.n_features_in_}")
 
@@ -56,15 +56,15 @@ if st.sidebar.button("Recommend Laptops"):
     st.title("Recommended Laptops")
 
     try:
-        # **Check that input_scaled has 5 features before prediction**
+        # **Ensure input dimensions match expected features**
         if input_scaled.shape[1] != best_model.n_features_in_:
             raise ValueError(f"Feature mismatch: Model expects {best_model.n_features_in_} features, but received {input_scaled.shape[1]}.")
 
-        # **Get recommendations using best_model**
+        # **Get recommendations**
         distances, indices = best_model.kneighbors(input_scaled, n_neighbors=5)
         recommended_laptops = cleaned_data.iloc[indices[0]]
 
-        # **Display results**
+        # **Display recommendations**
         st.subheader("Top 5 Recommended Laptops")
         st.table(recommended_laptops[['brand', 'processor_tier', 'Price', 'ram_memory', 'display_size', 'gpu_brand']])
 
