@@ -10,7 +10,7 @@ def closest_value(user_value, available_values):
 # Load models and data
 @st.cache_data
 def load_models():
-    return joblib.load("laptop_recommender.joblib")
+    return joblib.load("laptop_recommended.joblib")
 
 models = load_models()
 unscaled_data = models["unscaled_data"]  # Use unscaled data for dropdowns
