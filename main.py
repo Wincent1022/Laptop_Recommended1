@@ -16,6 +16,9 @@ models = load_models()
 cleaned_data = models["cleaned_data"]
 unscaled_data = models["unscaled_data"]  # Use unscaled data for dropdowns
 scaler = models["scaler"]
+pca = models["pca"]
+knn_pca = models["knn_pca"]
+cosine_sim = models["cosine_sim"]
 
 # Select only numerical columns used in scaling
 numerical_columns = ['num_cores', 'ram_memory', 'Price']
@@ -52,25 +55,28 @@ for col in expected_columns:
 # Convert to numpy array and apply scaling
 input_scaled = scaler.transform(input_unscaled_df[expected_columns])
 
-# Recommendation Button
-if st.sidebar.button("Recommend Laptops"):
-    # KNN Recommendation
-    knn_pca = models["knn_pca"]
-    pca = models["pca"]
-    input_transformed = pca.transform(input_scaled)
-    distances, indices = knn_pca.kneighbors(input_transformed, n_neighbors=5)
-    knn_recommendations = cleaned_data.iloc[indices[0]]
+# Ensure input_scaled has the correct shape for PCA
+if input_scaled.shape[1] != pca.n_features_:
+    st.error(f"Feature mismatch! PCA expects {pca.n_features_} features, but received {input_scaled.shape[1]}.")
+else:
+    # Recommendation Button
+    if st.sidebar.button("Recommend Laptops"):
+        # Apply PCA transformation
+        input_transformed = pca.transform(input_scaled)
+        
+        # KNN Recommendation
+        distances, indices = knn_pca.kneighbors(input_transformed, n_neighbors=5)
+        knn_recommendations = cleaned_data.iloc[indices[0]]
 
-    # Cosine Similarity Recommendation
-    cosine_sim = models["cosine_sim"]
-    similarities = cosine_sim.dot(input_scaled.T).flatten()
-    top_indices = np.argsort(similarities)[-5:][::-1]
-    cosine_recommendations = cleaned_data.iloc[top_indices]
+        # Cosine Similarity Recommendation
+        similarities = cosine_sim.dot(input_scaled.T).flatten()
+        top_indices = np.argsort(similarities)[-5:][::-1]
+        cosine_recommendations = cleaned_data.iloc[top_indices]
 
-    # Display Recommendations
-    st.title("Recommended Laptops")
-    st.subheader("Top 5 Laptops Based on KNN")
-    st.table(knn_recommendations[['brand', 'processor_tier', 'Price', 'ram_memory', 'display_size', 'gpu_brand']])
-    
-    st.subheader("Top 5 Laptops Based on Cosine Similarity")
-    st.table(cosine_recommendations[['brand', 'processor_tier', 'Price', 'ram_memory', 'display_size', 'gpu_brand']])
+        # Display Recommendations
+        st.title("Recommended Laptops")
+        st.subheader("Top 5 Laptops Based on KNN")
+        st.table(knn_recommendations[['brand', 'processor_tier', 'Price', 'ram_memory', 'display_size', 'gpu_brand']])
+        
+        st.subheader("Top 5 Laptops Based on Cosine Similarity")
+        st.table(cosine_recommendations[['brand', 'processor_tier', 'Price', 'ram_memory', 'display_size', 'gpu_brand']])
