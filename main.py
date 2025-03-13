@@ -18,11 +18,14 @@ scaler = models["scaler"]
 
 # Select only numerical columns used in scaling
 numerical_columns = ['num_cores', 'ram_memory', 'Price']
-scaled_data = cleaned_data[numerical_columns]
 
-# Apply inverse transform only on numerical columns
-original_data = pd.DataFrame(scaler.inverse_transform(scaled_data),
-                             columns=numerical_columns)
+# Ensure scaler was fitted properly before applying inverse transformation
+if hasattr(scaler, "scale_"):
+    scaled_data = cleaned_data[numerical_columns]
+    original_data = pd.DataFrame(scaler.inverse_transform(scaled_data),
+                                 columns=numerical_columns)
+else:
+    original_data = cleaned_data[numerical_columns].copy()  # Use unscaled data if inverse transform fails
 
 # Get unique original values for dropdowns
 available_cores = sorted(original_data["num_cores"].unique())
@@ -40,7 +43,10 @@ selected_price = st.sidebar.selectbox("Select Price", available_prices)
 
 # Convert input to scaled values for model input
 input_unscaled = np.array([[selected_cores, selected_ram, selected_price]])
-input_scaled = scaler.transform(input_unscaled)
+if hasattr(scaler, "scale_"):
+    input_scaled = scaler.transform(input_unscaled)
+else:
+    input_scaled = input_unscaled  # Use unscaled input if scaler is unavailable
 
 # Recommendation Button
 if st.sidebar.button("Recommend Laptops"):
