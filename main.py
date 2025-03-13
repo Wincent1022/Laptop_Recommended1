@@ -13,9 +13,12 @@ def load_models():
     return joblib.load("laptop_recommended.joblib")
 
 models = load_models()
+cleaned_data = models["cleaned_data"]
 unscaled_data = models["unscaled_data"]  # Use unscaled data for dropdowns
-cleaned_data = models["cleaned_data"]  # Scaled data for recommendation models
 scaler = models["scaler"]
+
+# Select only numerical columns used in scaling
+numerical_columns = ['num_cores', 'ram_memory', 'Price']
 
 # Get unique original values for dropdowns
 available_cores = sorted(unscaled_data["num_cores"].unique())
@@ -31,9 +34,23 @@ selected_cores = st.sidebar.selectbox("Select Number of Cores", available_cores)
 selected_ram = st.sidebar.selectbox("Select RAM Memory (GB)", available_ram)
 selected_price = st.sidebar.selectbox("Select Price", available_prices)
 
-# Convert input to scaled values for model input
+# Prepare user input
 input_unscaled = np.array([[selected_cores, selected_ram, selected_price]])
-input_scaled = scaler.transform(input_unscaled)  # Ensure proper scaling before prediction
+
+# Ensure input_unscaled has the correct number of features for transformation
+input_unscaled_df = pd.DataFrame(input_unscaled, columns=['num_cores', 'ram_memory', 'Price'])
+
+# Match the expected order of features used in StandardScaler()
+expected_columns = ['Price', 'Rating', 'num_cores', 'num_threads', 'ram_memory', 
+                    'display_size', 'resolution_width', 'resolution_height']
+
+# Fill missing columns with 0 (or mean values) to match scaler's expected shape
+for col in expected_columns:
+    if col not in input_unscaled_df:
+        input_unscaled_df[col] = 0  # Replace with meaningful default values if necessary
+
+# Convert to numpy array and apply scaling
+input_scaled = scaler.transform(input_unscaled_df[expected_columns])
 
 # Recommendation Button
 if st.sidebar.button("Recommend Laptops"):
