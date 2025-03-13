@@ -13,7 +13,7 @@ cleaned_data = models["cleaned_data"]
 unscaled_data = models["unscaled_data"]
 scaler = models["scaler"]
 best_model = models["best_model"]
-pca = models.get("pca", None)  # Get PCA if available
+pca = models.get("pca", None)  # Get PCA model if it was used in training
 
 # Get unique original values for dropdowns
 available_cores = sorted(unscaled_data["num_cores"].unique())
@@ -43,9 +43,9 @@ for col in expected_columns:
 # Apply Standard Scaling
 input_scaled = scaler.transform(input_unscaled_df[expected_columns])
 
-# Apply PCA transformation if PCA was used in training
+# Apply PCA transformation to reduce to 5 features (to match NearestNeighbors training)
 if pca is not None:
-    input_scaled = pca.transform(input_scaled)
+    input_scaled = pca.transform(input_scaled)  # Now input_scaled has 5 features
 
 # Debugging: Check input dimensions before prediction
 st.write(f"Input shape after transformation: {input_scaled.shape}")
@@ -56,7 +56,7 @@ if st.sidebar.button("Recommend Laptops"):
     st.title("Recommended Laptops")
 
     try:
-        # Get recommendations
+        # Get recommendations using the best model (assumed NearestNeighbors)
         distances, indices = best_model.kneighbors(input_scaled, n_neighbors=5)
         recommended_laptops = cleaned_data.iloc[indices[0]]
 
