@@ -13,24 +13,14 @@ def load_models():
     return joblib.load("laptop_recommender.joblib")
 
 models = load_models()
-cleaned_data = models["cleaned_data"]
+unscaled_data = models["unscaled_data"]  # Use unscaled data for dropdowns
+cleaned_data = models["cleaned_data"]  # Scaled data for recommendation models
 scaler = models["scaler"]
 
-# Select only numerical columns used in scaling
-numerical_columns = ['num_cores', 'ram_memory', 'Price']
-scaled_data = cleaned_data[numerical_columns].to_numpy()
-
-# Ensure scaler was fitted properly before applying inverse transformation
-if hasattr(scaler, "scale_") and scaled_data.shape[1] == len(scaler.scale_):
-    original_data = pd.DataFrame(scaler.inverse_transform(scaled_data),
-                                 columns=numerical_columns)
-else:
-    original_data = cleaned_data[numerical_columns].copy()  # Use unscaled data if inverse transform fails
-
 # Get unique original values for dropdowns
-available_cores = sorted(original_data["num_cores"].unique())
-available_ram = sorted(original_data["ram_memory"].unique())
-available_prices = sorted(original_data["Price"].unique())
+available_cores = sorted(unscaled_data["num_cores"].unique())
+available_ram = sorted(unscaled_data["ram_memory"].unique())
+available_prices = sorted(unscaled_data["Price"].unique())
 
 # Streamlit UI
 st.sidebar.title("Laptop Recommendation System")
@@ -43,10 +33,7 @@ selected_price = st.sidebar.selectbox("Select Price", available_prices)
 
 # Convert input to scaled values for model input
 input_unscaled = np.array([[selected_cores, selected_ram, selected_price]])
-if hasattr(scaler, "scale_") and input_unscaled.shape[1] == len(scaler.scale_):
-    input_scaled = scaler.transform(input_unscaled)
-else:
-    input_scaled = input_unscaled  # Use unscaled input if scaler is unavailable
+input_scaled = scaler.transform(input_unscaled)  # Ensure proper scaling before prediction
 
 # Recommendation Button
 if st.sidebar.button("Recommend Laptops"):
