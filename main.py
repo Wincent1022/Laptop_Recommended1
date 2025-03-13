@@ -56,8 +56,8 @@ for col in expected_columns:
 input_scaled = scaler.transform(input_unscaled_df[expected_columns])
 
 # Ensure input_scaled has the correct shape for PCA
-if input_scaled.shape[1] != pca.n_features_:
-    st.error(f"Feature mismatch! PCA expects {pca.n_features_} features, but received {input_scaled.shape[1]}.")
+if input_scaled.shape[1] != pca.n_features_in_:  # FIXED LINE
+    st.error(f"Feature mismatch! PCA expects {pca.n_features_in_} features, but received {input_scaled.shape[1]}.")
 else:
     # Recommendation Button
     if st.sidebar.button("Recommend Laptops"):
