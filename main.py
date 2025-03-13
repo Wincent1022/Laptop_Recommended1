@@ -3,6 +3,10 @@ import joblib
 import numpy as np
 import pandas as pd
 
+def closest_value(user_value, available_values):
+    """Find the closest match in available values"""
+    return min(available_values, key=lambda x: abs(x - user_value))
+
 # Load models and data
 @st.cache_data
 def load_models():
@@ -11,19 +15,26 @@ def load_models():
 models = load_models()
 cleaned_data = models["cleaned_data"]
 
+# Unique values for dropdown selections
+available_cores = sorted(cleaned_data["num_cores"].unique())
+available_ram = sorted(cleaned_data["ram_memory"].unique())
+available_prices = sorted(cleaned_data["Price"].unique())
+
 # Streamlit UI
 st.sidebar.title("Laptop Recommendation System")
 st.sidebar.subheader("Select Preferences")
 
-# Sidebar user inputs
-user_inputs = {
-    "num_cores": st.sidebar.slider("Select Number of Cores", int(cleaned_data["num_cores"].min()), int(cleaned_data["num_cores"].max()), int(cleaned_data["num_cores"].mean())),
-    "ram_memory": st.sidebar.slider("Select RAM Memory (GB)", int(cleaned_data["ram_memory"].min()), int(cleaned_data["ram_memory"].max()), int(cleaned_data["ram_memory"].mean())),
-    "Price": st.sidebar.slider("Select Price", float(cleaned_data["Price"].min()), float(cleaned_data["Price"].max()), float(cleaned_data["Price"].mean()))
-}
+# Sidebar user inputs with dropdown selections
+selected_cores = st.sidebar.selectbox("Select Number of Cores", available_cores)
+selected_ram = st.sidebar.selectbox("Select RAM Memory (GB)", available_ram)
+selected_price = st.sidebar.selectbox("Select Price", available_prices)
 
-# Convert input to array
-input_array = np.array([user_inputs[feature] for feature in user_inputs.keys()]).reshape(1, -1)
+# Convert input to match available values
+selected_cores = closest_value(selected_cores, available_cores)
+selected_ram = closest_value(selected_ram, available_ram)
+selected_price = closest_value(selected_price, available_prices)
+
+input_array = np.array([selected_cores, selected_ram, selected_price]).reshape(1, -1)
 
 # Recommendation Button
 if st.sidebar.button("Recommend Laptops"):
