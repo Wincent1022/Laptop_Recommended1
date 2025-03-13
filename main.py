@@ -16,9 +16,7 @@ models = load_models()
 cleaned_data = models["cleaned_data"]
 unscaled_data = models["unscaled_data"]  # Use unscaled data for dropdowns
 scaler = models["scaler"]
-pca = models["pca"]
-knn_pca = models["knn_pca"]
-cosine_sim = models["cosine_sim"]
+best_model = models["best_model"]  # Load the best-performing model
 
 # Select only numerical columns used in scaling
 numerical_columns = ['num_cores', 'ram_memory', 'Price']
@@ -47,7 +45,7 @@ input_unscaled_df = pd.DataFrame(input_unscaled, columns=['num_cores', 'ram_memo
 expected_columns = ['Price', 'Rating', 'num_cores', 'num_threads', 'ram_memory', 
                     'display_size', 'resolution_width', 'resolution_height']
 
-# Fill missing columns with 0 (or mean values) to match scaler's expected shape
+# Fill missing columns with 0 (or default values) to match model expectations
 for col in expected_columns:
     if col not in input_unscaled_df:
         input_unscaled_df[col] = 0  # Replace with meaningful default values if necessary
@@ -55,28 +53,35 @@ for col in expected_columns:
 # Convert to numpy array and apply scaling
 input_scaled = scaler.transform(input_unscaled_df[expected_columns])
 
-# Ensure input_scaled has the correct shape for PCA
-if input_scaled.shape[1] != pca.n_features_in_:  # FIXED LINE
-    st.error(f"Feature mismatch! PCA expects {pca.n_features_in_} features, but received {input_scaled.shape[1]}.")
-else:
-    # Recommendation Button
-    if st.sidebar.button("Recommend Laptops"):
-        # Apply PCA transformation
+# Recommendation Button
+if st.sidebar.button("Recommend Laptops"):
+    st.title("Recommended Laptops")
+
+    if isinstance(best_model, KMeans):
+        # K-Means Clustering Recommendation
+        cluster_label = best_model.predict(input_scaled)[0]
+        recommended_laptops = cleaned_data[cleaned_data["cluster_label"] == cluster_label]
+
+        st.subheader("Top Laptops Based on Clustering")
+        st.table(recommended_laptops[['brand', 'processor_tier', 'Price', 'ram_memory', 'display_size', 'gpu_brand']])
+    
+    elif isinstance(best_model, NearestNeighbors):
+        # PCA + KNN Recommendation
+        pca = models["pca"]
         input_transformed = pca.transform(input_scaled)
-        
-        # KNN Recommendation
-        distances, indices = knn_pca.kneighbors(input_transformed, n_neighbors=5)
+        distances, indices = best_model.kneighbors(input_transformed, n_neighbors=5)
         knn_recommendations = cleaned_data.iloc[indices[0]]
 
+        st.subheader("Top 5 Laptops Based on KNN")
+        st.table(knn_recommendations[['brand', 'processor_tier', 'Price', 'ram_memory', 'display_size', 'gpu_brand']])
+
+    elif isinstance(best_model, np.ndarray):
         # Cosine Similarity Recommendation
-        similarities = cosine_sim.dot(input_scaled.T).flatten()
+        similarities = best_model.dot(input_scaled.T).flatten()
         top_indices = np.argsort(similarities)[-5:][::-1]
         cosine_recommendations = cleaned_data.iloc[top_indices]
 
-        # Display Recommendations
-        st.title("Recommended Laptops")
-        st.subheader("Top 5 Laptops Based on KNN")
-        st.table(knn_recommendations[['brand', 'processor_tier', 'Price', 'ram_memory', 'display_size', 'gpu_brand']])
-        
         st.subheader("Top 5 Laptops Based on Cosine Similarity")
         st.table(cosine_recommendations[['brand', 'processor_tier', 'Price', 'ram_memory', 'display_size', 'gpu_brand']])
+    else:
+        st.error("No valid recommendation model found.")
