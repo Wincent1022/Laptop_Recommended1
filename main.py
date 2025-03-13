@@ -10,21 +10,20 @@ def load_models():
 
 models = load_models()
 cleaned_data = models["cleaned_data"]
-numerical_features = cleaned_data.select_dtypes(include=['number']).columns.tolist()
 
 # Streamlit UI
 st.sidebar.title("Laptop Recommendation System")
 st.sidebar.subheader("Select Preferences")
 
 # Sidebar user inputs
-user_inputs = {}
-for feature in numerical_features:
-    user_inputs[feature] = st.sidebar.slider(
-        f"Select {feature}", float(cleaned_data[feature].min()), float(cleaned_data[feature].max()), float(cleaned_data[feature].mean())
-    )
+user_inputs = {
+    "num_cores": st.sidebar.slider("Select Number of Cores", int(cleaned_data["num_cores"].min()), int(cleaned_data["num_cores"].max()), int(cleaned_data["num_cores"].mean())),
+    "ram_memory": st.sidebar.slider("Select RAM Memory (GB)", int(cleaned_data["ram_memory"].min()), int(cleaned_data["ram_memory"].max()), int(cleaned_data["ram_memory"].mean())),
+    "Price": st.sidebar.slider("Select Price", float(cleaned_data["Price"].min()), float(cleaned_data["Price"].max()), float(cleaned_data["Price"].mean()))
+}
 
 # Convert input to array
-input_array = np.array([user_inputs[feature] for feature in numerical_features]).reshape(1, -1)
+input_array = np.array([user_inputs[feature] for feature in user_inputs.keys()]).reshape(1, -1)
 
 # Recommendation Button
 if st.sidebar.button("Recommend Laptops"):
