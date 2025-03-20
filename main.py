@@ -14,6 +14,11 @@ features = model_data["features"]
 # Remove unwanted features
 features = [f for f in features if f not in ["primary_storage_capacity", "secondary_storage_capacity", "year_of_warranty"]]
 
+# Define possible values for display size and resolution
+possible_display_sizes = ["13.3", "14.0", "15.6", "16.0", "17.3"]
+possible_resolution_widths = ["1366", "1920", "2560", "3840"]
+possible_resolution_heights = ["768", "1080", "1440", "2160"]
+
 # Streamlit UI
 st.title("Laptop Recommendation System")
 st.write("Enter your laptop preferences to get recommendations!")
@@ -24,6 +29,12 @@ for feature in features:
     if feature in label_encoders:
         options = list(label_encoders[feature].classes_)
         user_input[feature] = st.selectbox(f"Select {feature}", options)
+    elif feature == "display_size":
+        user_input[feature] = st.selectbox(f"Select {feature}", possible_display_sizes)
+    elif feature == "resolution_width":
+        user_input[feature] = st.selectbox(f"Select {feature}", possible_resolution_widths)
+    elif feature == "resolution_height":
+        user_input[feature] = st.selectbox(f"Select {feature}", possible_resolution_heights)
     else:
         user_input[feature] = st.selectbox(f"Select {feature}", list(range(1, 17)))  # Dropdown for numerical values
 
