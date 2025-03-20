@@ -6,6 +6,10 @@ import pandas as pd
 model_data = joblib.load("laptop_recommendation.joblib")
 laptop_data = pd.read_csv("laptops.csv")  # Load laptop dataset
 
+# Ensure Rating column is in integer format
+if 'Rating' in laptop_data.columns:
+    laptop_data['Rating'] = laptop_data['Rating'].astype(int)
+
 # Extract components
 clf = model_data["classification_model"]
 reg = model_data["regression_model"]
@@ -63,7 +67,7 @@ if st.button("Get Recommendation"):
     
     # Make predictions
     try:
-        classification_prediction = clf.predict(input_df)[0]
+        classification_prediction = int(clf.predict(input_df)[0])  # Ensure prediction is an integer
         regression_prediction = reg.predict(input_df)[0]
         
         # Find matching laptops from dataset
@@ -79,6 +83,6 @@ if st.button("Get Recommendation"):
             st.subheader("Possible Laptop Models:")
             st.write(matching_laptops[['Model', 'Brand', 'Price']])
         else:
-            st.write("No matching laptops found in the dataset.")
+            st.write("No matching laptops found in the dataset. (Debug: Check if ratings are correctly formatted)")
     except Exception as e:
         st.error(f"Prediction Error: {str(e)}")
