@@ -11,6 +11,9 @@ reg = model_data["regression_model"]
 label_encoders = model_data["label_encoders"]
 features = model_data["features"]
 
+# Remove unwanted features
+features = [f for f in features if f not in ["primary_storage_capacity", "secondary_storage_capacity", "year_of_warranty"]]
+
 # Streamlit UI
 st.title("Laptop Recommendation System")
 st.write("Enter your laptop preferences to get recommendations!")
@@ -22,7 +25,7 @@ for feature in features:
         options = list(label_encoders[feature].classes_)
         user_input[feature] = st.selectbox(f"Select {feature}", options)
     else:
-        user_input[feature] = st.number_input(f"Enter {feature}", min_value=0, step=1)
+        user_input[feature] = st.selectbox(f"Select {feature}", list(range(1, 17)))  # Dropdown for numerical values
 
 # Predict button
 if st.button("Get Recommendation"):
