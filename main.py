@@ -70,12 +70,18 @@ if st.button("Get Recommendation"):
         classification_prediction = int(clf.predict(input_df)[0])  # Ensure prediction is an integer
         regression_prediction = reg.predict(input_df)[0]
         
+        # Find the original rating range corresponding to the predicted class
+        rating_ranges = laptop_data.groupby('Rating')['Original_Rating_Column'].agg(['min', 'max'])
+        rating_range = rating_ranges.loc[classification_prediction] if classification_prediction in rating_ranges.index else None
+        
         # Find matching laptops from dataset
         matching_laptops = laptop_data[laptop_data['Rating'] == classification_prediction]
         
         # Display results
         st.subheader("Recommendation Results:")
         st.write(f"Predicted Laptop Rating: {classification_prediction}")
+        if rating_range is not None:
+            st.write(f"This rating corresponds to original ratings between {rating_range['min']} and {rating_range['max']}")
         st.write(f"Estimated Laptop Price: ${regression_prediction:.2f}")
         
         # Show possible laptop models
