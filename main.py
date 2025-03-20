@@ -52,9 +52,13 @@ if st.button("Get Recommendation"):
     # Convert user input to DataFrame
     input_df = pd.DataFrame([user_input])
     
-    # Encode categorical values
+    # Ensure input_df has correct column names
+    input_df = input_df.reindex(columns=features)
+    
+    # Encode categorical values if they exist in input_df
     for col, le in label_encoders.items():
-        input_df[col] = le.transform(input_df[col])
+        if col in input_df.columns:
+            input_df[col] = le.transform(input_df[col])
     
     # Make predictions
     classification_prediction = clf.predict(input_df)[0]
