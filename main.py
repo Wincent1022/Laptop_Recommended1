@@ -4,7 +4,7 @@ import pandas as pd
 
 # Load the saved model and encoders
 model_data = joblib.load("laptop_recommendation.joblib")
-laptop_data = pd.read_csv("laptops.csv")  # Load laptop dataset
+laptop_data = pd.read_csv("laptops_updated.csv") # Load laptop dataset
 
 # Ensure Rating column is in integer format
 if 'Rating' in laptop_data.columns:
