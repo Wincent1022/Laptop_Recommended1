@@ -14,10 +14,13 @@ features = model_data["features"]
 # Remove unwanted features
 features = [f for f in features if f not in ["primary_storage_capacity", "secondary_storage_capacity", "year_of_warranty"]]
 
-# Define possible values for display size and resolution
+# Define possible values for display size, resolution, cores, and RAM
 possible_display_sizes = ["13.3", "14.0", "15.6", "16.0", "17.3"]
 possible_resolution_widths = ["1366", "1920", "2560", "3840"]
 possible_resolution_heights = ["768", "1080", "1440", "2160"]
+possible_num_cores = list(range(2, 17, 2))  # Even numbers from 2 to 16
+possible_num_threads = list(range(2, 17, 2))  # Even numbers from 2 to 16
+possible_ram_memory = list(range(4, 33, 4))  # Increments of 4 up to 32
 
 # Streamlit UI
 st.title("Laptop Recommendation System")
@@ -35,8 +38,14 @@ for feature in features:
         user_input[feature] = st.selectbox(f"Select {feature}", possible_resolution_widths)
     elif feature == "resolution_height":
         user_input[feature] = st.selectbox(f"Select {feature}", possible_resolution_heights)
+    elif feature == "num_cores":
+        user_input[feature] = st.selectbox(f"Select {feature}", possible_num_cores)
+    elif feature == "num_threads":
+        user_input[feature] = st.selectbox(f"Select {feature}", possible_num_threads)
+    elif feature == "ram_memory":
+        user_input[feature] = st.selectbox(f"Select {feature}", possible_ram_memory)
     else:
-        user_input[feature] = st.selectbox(f"Select {feature}", list(range(1, 17)))  # Dropdown for numerical values
+        user_input[feature] = st.selectbox(f"Select {feature}", list(range(1, 17)))  # Default dropdown for other numerical values
 
 # Predict button
 if st.button("Get Recommendation"):
