@@ -4,17 +4,20 @@ import pandas as pd
 
 # Load the saved model and encoders
 model_data = joblib.load("laptop_recommendation.joblib")
-laptop_data = pd.read_csv("laptops_updated.csv") # Load laptop dataset
+laptop_data = pd.read_csv("laptops_updated.csv")  # Load laptop dataset
 
-# Ensure Rating column is in integer format
-if 'Rating' in laptop_data.columns:
-    laptop_data['Rating'] = laptop_data['Rating'].astype(int)
+# Ensure Category column is in integer format
+if 'Category' in laptop_data.columns:
+    laptop_data['Category'] = laptop_data['Category'].astype(int)
 
 # Extract components
 clf = model_data["classification_model"]
 reg = model_data["regression_model"]
 label_encoders = model_data["label_encoders"]
 features = model_data["features"]
+
+# Define category mapping
+category_mapping = {1: "Gaming", 2: "Business", 3: "Budget-friendly"}
 
 # Define possible values for display size, resolution, cores, and RAM
 possible_display_sizes = ["13.3", "14.0", "15.6", "16.0", "17.3"]
@@ -69,13 +72,14 @@ if st.button("Get Recommendation"):
     try:
         classification_prediction = int(clf.predict(input_df)[0])  # Ensure prediction is an integer
         regression_prediction = reg.predict(input_df)[0]
+        predicted_category = category_mapping.get(classification_prediction, "Unknown")
         
         # Find matching laptops from dataset
-        matching_laptops = laptop_data[laptop_data['Rating'] == classification_prediction]
+        matching_laptops = laptop_data[laptop_data['Category'] == classification_prediction]
         
         # Display results
         st.subheader("Recommendation Results:")
-        st.write(f"Predicted Laptop Rating: {classification_prediction}")
+        st.write(f"Predicted Laptop Category: {predicted_category}")
         st.write(f"Estimated Laptop Price: ${regression_prediction:.2f}")
         
         # Show possible laptop models
@@ -83,6 +87,6 @@ if st.button("Get Recommendation"):
             st.subheader("Possible Laptop Models:")
             st.write(matching_laptops[['Model', 'brand', 'Price']])
         else:
-            st.write("No matching laptops found in the dataset. (Debug: Check if ratings are correctly formatted)")
+            st.write("No matching laptops found in the dataset. (Debug: Check if categories are correctly formatted)")
     except Exception as e:
         st.error(f"Prediction Error: {str(e)}")
