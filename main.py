@@ -81,7 +81,7 @@ if st.button("Get Recommendation"):
         # Show possible laptop models
         if not matching_laptops.empty:
             st.subheader("Possible Laptop Models:")
-            st.write(matching_laptops[['Model', 'Brand', 'Price']])
+            st.write(matching_laptops[['Model', 'brand', 'Price']])
         else:
             st.write("No matching laptops found in the dataset. (Debug: Check if ratings are correctly formatted)")
     except Exception as e:
