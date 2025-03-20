@@ -11,9 +11,6 @@ reg = model_data["regression_model"]
 label_encoders = model_data["label_encoders"]
 features = model_data["features"]
 
-# Remove unwanted features
-features = [f for f in features if f not in ["primary_storage_capacity", "secondary_storage_capacity", "year_of_warranty"]]
-
 # Define possible values for display size, resolution, cores, and RAM
 possible_display_sizes = ["13.3", "14.0", "15.6", "16.0", "17.3"]
 possible_resolution_widths = ["1366", "1920", "2560", "3840"]
@@ -62,10 +59,6 @@ if st.button("Get Recommendation"):
     
     # Convert all values to float to match model expectations
     input_df = input_df.astype(float)
-    
-    # Debugging: Print input data before prediction
-    st.write("Debugging: Input DataFrame for Prediction")
-    st.write(input_df)
     
     # Make predictions
     try:
