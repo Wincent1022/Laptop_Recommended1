@@ -52,19 +52,29 @@ if st.button("Get Recommendation"):
     # Convert user input to DataFrame
     input_df = pd.DataFrame([user_input])
     
-    # Ensure input_df has correct column names
-    input_df = input_df.reindex(columns=features)
+    # Ensure input_df has correct column names and order
+    input_df = input_df.reindex(columns=features, fill_value=0)
     
     # Encode categorical values if they exist in input_df
     for col, le in label_encoders.items():
         if col in input_df.columns:
             input_df[col] = le.transform(input_df[col])
     
-    # Make predictions
-    classification_prediction = clf.predict(input_df)[0]
-    regression_prediction = reg.predict(input_df)[0]
+    # Convert all values to float to match model expectations
+    input_df = input_df.astype(float)
     
-    # Display results
-    st.subheader("Recommendation Results:")
-    st.write(f"Predicted Laptop Rating: {classification_prediction}")
-    st.write(f"Estimated Laptop Price: ${regression_prediction:.2f}")
+    # Debugging: Print input data before prediction
+    st.write("Debugging: Input DataFrame for Prediction")
+    st.write(input_df)
+    
+    # Make predictions
+    try:
+        classification_prediction = clf.predict(input_df)[0]
+        regression_prediction = reg.predict(input_df)[0]
+        
+        # Display results
+        st.subheader("Recommendation Results:")
+        st.write(f"Predicted Laptop Rating: {classification_prediction}")
+        st.write(f"Estimated Laptop Price: ${regression_prediction:.2f}")
+    except Exception as e:
+        st.error(f"Prediction Error: {str(e)}")
