@@ -4,6 +4,7 @@ import pandas as pd
 
 # Load the saved model and encoders
 model_data = joblib.load("laptop_recommendation.joblib")
+laptop_data = pd.read_csv("laptops.csv")  # Load laptop dataset
 
 # Extract components
 clf = model_data["classification_model"]
@@ -65,9 +66,19 @@ if st.button("Get Recommendation"):
         classification_prediction = clf.predict(input_df)[0]
         regression_prediction = reg.predict(input_df)[0]
         
+        # Find matching laptops from dataset
+        matching_laptops = laptop_data[laptop_data['Rating'] == classification_prediction]
+        
         # Display results
         st.subheader("Recommendation Results:")
         st.write(f"Predicted Laptop Rating: {classification_prediction}")
         st.write(f"Estimated Laptop Price: ${regression_prediction:.2f}")
+        
+        # Show possible laptop models
+        if not matching_laptops.empty:
+            st.subheader("Possible Laptop Models:")
+            st.write(matching_laptops[['Model', 'Brand', 'Price']])
+        else:
+            st.write("No matching laptops found in the dataset.")
     except Exception as e:
         st.error(f"Prediction Error: {str(e)}")
