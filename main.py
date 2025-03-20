@@ -1,72 +1,43 @@
 import streamlit as st
 import joblib
-import numpy as np
 import pandas as pd
 
-# Load models and data
-@st.cache_data
-def load_models():
-    return joblib.load("laptop_recommended.joblib")
+# Load the saved model and encoders
+model_data = joblib.load("laptop_recommendation.joblib")
 
-models = load_models()
-cleaned_data = models["cleaned_data"]
-unscaled_data = models["unscaled_data"]
-scaler = models["scaler"]
-best_model = models["best_model"]
-pca = models.get("pca", None)  # Get PCA model if available
-
-# Get unique original values for dropdowns
-available_cores = sorted(unscaled_data["num_cores"].unique())
-available_ram = sorted(unscaled_data["ram_memory"].unique())
-available_prices = sorted(unscaled_data["Price"].unique())
+# Extract components
+clf = model_data["classification_model"]
+reg = model_data["regression_model"]
+label_encoders = model_data["label_encoders"]
+features = model_data["features"]
 
 # Streamlit UI
-st.sidebar.title("Laptop Recommendation System")
-st.sidebar.subheader("Select Preferences")
+st.title("Laptop Recommendation System")
+st.write("Enter your laptop preferences to get recommendations!")
 
-selected_cores = st.sidebar.selectbox("Select Number of Cores", available_cores)
-selected_ram = st.sidebar.selectbox("Select RAM Memory (GB)", available_ram)
-selected_price = st.sidebar.selectbox("Select Price", available_prices)
+# User input form
+user_input = {}
+for feature in features:
+    if feature in label_encoders:
+        options = list(label_encoders[feature].classes_)
+        user_input[feature] = st.selectbox(f"Select {feature}", options)
+    else:
+        user_input[feature] = st.number_input(f"Enter {feature}", min_value=0, step=1)
 
-# Prepare user input
-input_unscaled = np.array([[selected_cores, selected_ram, selected_price]])
-expected_columns = ['Price', 'Rating', 'num_cores', 'num_threads', 'ram_memory', 
-                    'display_size', 'resolution_width', 'resolution_height']
-
-input_unscaled_df = pd.DataFrame(input_unscaled, columns=['num_cores', 'ram_memory', 'Price'])
-
-# Fill missing columns with 0 to match training data
-for col in expected_columns:
-    if col not in input_unscaled_df:
-        input_unscaled_df[col] = 0  
-
-# Apply Standard Scaling
-input_scaled = scaler.transform(input_unscaled_df[expected_columns])
-
-# **Ensure PCA transformation is applied correctly**
-if pca is not None:
-    input_scaled = pca.transform(input_scaled)  # Reduce to 5 features
-
-# Debugging: Check input dimensions before making predictions
-st.write(f"Input shape after transformation: {input_scaled.shape}")
-st.write(f"Expected input shape for model: {best_model.n_features_in_}")
-
-# Recommendation Button
-if st.sidebar.button("Recommend Laptops"):
-    st.title("Recommended Laptops")
-
-    try:
-        # **Ensure input dimensions match expected features**
-        if input_scaled.shape[1] != best_model.n_features_in_:
-            raise ValueError(f"Feature mismatch: Model expects {best_model.n_features_in_} features, but received {input_scaled.shape[1]}.")
-
-        # **Get recommendations**
-        distances, indices = best_model.kneighbors(input_scaled, n_neighbors=5)
-        recommended_laptops = cleaned_data.iloc[indices[0]]
-
-        # **Display recommendations**
-        st.subheader("Top 5 Recommended Laptops")
-        st.table(recommended_laptops[['brand', 'processor_tier', 'Price', 'ram_memory', 'display_size', 'gpu_brand']])
-
-    except ValueError as e:
-        st.error(f"Model input mismatch: {str(e)}")
+# Predict button
+if st.button("Get Recommendation"):
+    # Convert user input to DataFrame
+    input_df = pd.DataFrame([user_input])
+    
+    # Encode categorical values
+    for col, le in label_encoders.items():
+        input_df[col] = le.transform(input_df[col])
+    
+    # Make predictions
+    classification_prediction = clf.predict(input_df)[0]
+    regression_prediction = reg.predict(input_df)[0]
+    
+    # Display results
+    st.subheader("Recommendation Results:")
+    st.write(f"Predicted Laptop Rating: {classification_prediction}")
+    st.write(f"Estimated Laptop Price: ${regression_prediction:.2f}")
