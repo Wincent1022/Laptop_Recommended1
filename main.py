@@ -18,7 +18,7 @@ elif model_option == "Approach 2: KNN + Linear Regression":
 elif model_option == "Approach 3: Gradient Boosting":
     model_data = joblib.load("approach3_gb.joblib")
 else:
-    print("Error")
+    st.error("Selected model approach is invalid or unsupported.")
 
 laptop_data = pd.read_csv("laptops_updated.csv")  # Load laptop dataset
 
