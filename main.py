@@ -15,8 +15,10 @@ if model_option == "Approach 1: Random Forest":
     model_data = joblib.load("approach1_rf.joblib")
 elif model_option == "Approach 2: KNN + Linear Regression":
     model_data = joblib.load("approach2_knn_lr.joblib")
-else:
+elif model_option == "Approach 3: Gradient Boosting":
     model_data = joblib.load("approach3_gb.joblib")
+else:
+    print("Error")
 
 laptop_data = pd.read_csv("laptops_updated.csv")  # Load laptop dataset
 
