@@ -5,4 +5,3 @@ scikit-learn
 joblib
 matplotlib
 seaborn
-python_version >=3.9,<3.13
