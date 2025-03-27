@@ -10,6 +10,8 @@ model_option = st.sidebar.selectbox("Select Recommendation Approach", [
     "Approach 3: Naive Bayes + Decision Tree"
 ])
 
+laptop_data = pd.read_csv("laptops_updated.csv")
+
 # Load corresponding model file
 if model_option == "Approach 1: Random Forest":
     model_data = joblib.load("approach1_rf.joblib")
@@ -17,8 +19,6 @@ elif model_option == "Approach 2: KNN + Linear Regression":
     model_data = joblib.load("approach2_knn_lr.joblib")
 else:
     model_data = joblib.load("approach3_nb_dt.joblib")
-
-laptop_data = pd.read_csv("laptops_updated.csv")
 
 # Extract components
 clf = model_data["classification_model"]
@@ -34,33 +34,37 @@ possible_num_cores = list(range(2, 17, 2))
 possible_num_threads = list(range(2, 17, 2))
 possible_ram_memory = list(range(4, 33, 4))
 
-# Main Page
-st.title("Laptop Recommendation System")
-st.write("Enter your preferences and get laptop recommendations!")
+# Sidebar Inputs
+st.sidebar.title("Laptop Recommendation System")
+st.sidebar.write("Enter your preferences and click below!")
 
-# Input Form
 user_input = {}
 for feature in features:
     if feature in label_encoders:
         options = list(label_encoders[feature].classes_)
-        user_input[feature] = st.selectbox(f"Select {feature}", options)
+        user_input[feature] = st.sidebar.selectbox(f"Select {feature}", options)
     elif feature == "display_size":
-        user_input[feature] = st.selectbox(f"Select {feature}", possible_display_sizes)
+        user_input[feature] = st.sidebar.selectbox(f"Select {feature}", possible_display_sizes)
     elif feature == "resolution_width":
-        user_input[feature] = st.selectbox(f"Select {feature}", possible_resolution_widths)
+        user_input[feature] = st.sidebar.selectbox(f"Select {feature}", possible_resolution_widths)
     elif feature == "resolution_height":
-        user_input[feature] = st.selectbox(f"Select {feature}", possible_resolution_heights)
+        user_input[feature] = st.sidebar.selectbox(f"Select {feature}", possible_resolution_heights)
     elif feature == "num_cores":
-        user_input[feature] = st.selectbox(f"Select {feature}", possible_num_cores)
+        user_input[feature] = st.sidebar.selectbox(f"Select {feature}", possible_num_cores)
     elif feature == "num_threads":
-        user_input[feature] = st.selectbox(f"Select {feature}", possible_num_threads)
+        user_input[feature] = st.sidebar.selectbox(f"Select {feature}", possible_num_threads)
     elif feature == "ram_memory":
-        user_input[feature] = st.selectbox(f"Select {feature}", possible_ram_memory)
+        user_input[feature] = st.sidebar.selectbox(f"Select {feature}", possible_ram_memory)
     else:
-        user_input[feature] = st.selectbox(f"Select {feature}", list(range(1, 17)))
+        user_input[feature] = st.sidebar.selectbox(f"Select {feature}", list(range(1, 17)))
 
-# Predict
-if st.button("Get Recommendation"):
+predict_button = st.sidebar.button("Get Recommendation")
+
+# Main Output
+st.title("Laptop Recommendation System")
+st.write("Recommendations will appear below based on your selected preferences.")
+
+if predict_button:
     input_df = pd.DataFrame([user_input])
     input_df = input_df.reindex(columns=features, fill_value=0)
 
