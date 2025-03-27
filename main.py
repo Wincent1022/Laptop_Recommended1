@@ -74,8 +74,11 @@ if st.button("Get Recommendation"):
         classification_prediction = int(clf.predict(input_df)[0])
         regression_prediction = reg.predict(input_df)[0]
 
+        category_labels = {1: "Gaming", 2: "Business", 3: "Budget-Friendly"}
+        category_name = category_labels.get(classification_prediction, "Unknown")
+
         st.subheader("Recommendation Results:")
-        st.write(f"Predicted Laptop Category: {classification_prediction} (1: Gaming, 2: Business, 3: Budget)")
+        st.write(f"Predicted Laptop Category: {category_name}")
         st.write(f"Estimated Laptop Price: ${regression_prediction:.2f}")
 
         matching_laptops = laptop_data[laptop_data['Category'] == classification_prediction]
